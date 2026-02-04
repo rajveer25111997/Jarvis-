@@ -31,12 +31,11 @@ price_val = get_btc_price()
 try:
     # 1. डेटा लाना (इंडिकेटर्स के लिए)
     c_url = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50"
-    c_res = requests.get(c_url, timeout=2).json()
-    # डेटा को सही नाम देना ताकि जार्विस कंफ्यूज न हो
-        df = pd.DataFrame(c_res)
-        df = df.iloc[:, [0, 1, 2, 3, 4, 5]] # सिर्फ ज़रूरी कॉलम चुनना
-        df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
-        df['Close'] = df['Close'].astype(float)
+    c_res = requests.get(c_url, timeout=2).json()ो
+    df = pd.DataFrame(c_res)
+    df = df.iloc[:, [0, 1, 2, 3, 4, 5]] # सिर्फ ज़रूरी कॉलम चुनना
+    df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
+    df['Close'] = df['Close'].astype(float)
     
     # 2. जावेद (EMA 9/21) कैलकुलेट करना
     df['E9'] = ta.ema(df['Close'], length=9)
