@@ -24,6 +24,39 @@ def get_btc_price():
 
 # 3. जार्विस डिस्प्ले लॉजिक
 price_val = get_btc_price()
+# --- 🧠 जार्विस सिग्नल इंजन (इसे price_val के नीचे पेस्ट करें) ---
+try:
+    # 1. डेटा लाना (इंडिकेटर्स के लिए)
+    c_url = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50"
+    c_res = requests.get(c_url, timeout=2).json()
+    df = pd.DataFrame(c_res, columns=['T','O','H','L','C','V','CT','QV','Tr','TB','TQ','I'])
+    df['Close'] = df['Close'].astype(float)
+    
+    # 2. जावेद (EMA 9/21) कैलकुलेट करना
+    df['E9'] = ta.ema(df['Close'], length=9)
+    df['E21'] = ta.ema(df['Close'], length=21)
+    e9, e21 = df['E9'].iloc[-1], df['E21'].iloc[-1]
+    
+    # 3. सिग्नल और बॉक्स का रंग तय करना
+    if e9 > e21:
+        sig_text = "🟢 CALL (BUY)"
+        box_color = "#00FF00"  # हरा
+        font_color = "black"
+    else:
+        sig_text = "🔴 PUT (SELL)"
+        box_color = "#FF0000"  # लाल
+        font_color = "white"
+
+    # 4. स्क्रीन पर बॉक्स दिखाना
+    st.markdown(f"""
+        <div style="background-color:{box_color}; padding:30px; border-radius:15px; text-align:center; border: 5px solid white; margin-top:15px;">
+            <h1 style="color:{font_color}; margin:0; font-size:55px; font-weight:bold;">{sig_text}</h1>
+            <p style="color:{font_color}; font-size:20px;">EMA 9: {round(e9,2)} | EMA 21: {round(e21,2)}</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+except Exception as e:
+    st.error(f"सिग्नल इंजन में एरर: {e}")
 
 if price_val > 0:
     # बिटकॉइन का चमकता हुआ भाव
