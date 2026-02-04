@@ -33,10 +33,13 @@ try:
     c_url = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50"
     c_res = requests.get(c_url, timeout=2).json()
     df = pd.DataFrame(c_res)
-    df = df.iloc[:, [0, 1, 2, 3, 4, 5]] # सिर्फ ज़रूरी कॉलम चुनना
-    df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
-    df['Close'] = df['Close'].astype(float)
-    
+    if len(df.columns) >= 6:
+        df = df.iloc[:, :6]
+        df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
+        df['Close'] = df['Close'].astype(float)
+    else:
+        # अगर डेटा कम है तो ज़बरदस्ती इंडेक्स बनाना
+        df = pd.DataFrame(c_res, index=range(len(c_res)))
     # 2. जावेद (EMA 9/21) कैलकुलेट करना
     df['E9'] = ta.ema(df['Close'], length=9)
     df['E21'] = ta.ema(df['Close'], length=21)
