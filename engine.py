@@ -20,3 +20,19 @@ def get_news_impact(df):
     val = round(df['ATR'].iloc[-1], 2)
     status = "HIGH" if val > 5.0 else "NORMAL"
     return val, status
+# --- Point B: Whale Radar (Operator Entry) ---
+def get_whale_radar(df):
+    """
+    यह फंक्शन वॉल्यूम के ज़रिए बड़े खिलाड़ियों की एंट्री पकड़ता है।
+    """
+    if df.empty or 'Volume' not in df.columns:
+        return False, 0.0
+    
+    # पिछली 15 कैंडल्स का औसत वॉल्यूम
+    avg_vol = df['Volume'].tail(15).mean()
+    current_vol = df['Volume'].iloc[-1]
+    
+    # अगर अभी का वॉल्यूम औसत से 1.5 गुना ज़्यादा है, तो व्हेल की एंट्री है
+    is_whale = current_vol > (avg_vol * 1.5)
+    
+    return is_whale, round(current_vol, 0)
