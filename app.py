@@ -1,57 +1,58 @@
 import streamlit as st
 import pandas as pd
 import pandas_ta as ta
-import requests
-import time
+import yfinance as yf
 from streamlit_autorefresh import st_autorefresh
+from datetime import datetime
 
-# 1. सुपर फ़ास्ट रिफ्रेश (1 सेकंड)
-st_autorefresh(interval=1000, key="jarvis_final_fix")
+# 1. 1-सेकंड का हार्ड रिफ्रेश
+st_autorefresh(interval=1000, key="jarvis_fix_v2")
 
-st.title("₿ JARVIS TURBO v2.0")
-st.subheader("राजवीर सर, अब कोई एरर नहीं आएगा!")
+st.title("₿ JARVIS CRYPTO v2.1")
+st.write(f"Last Sync: {datetime.now().strftime('%H:%M:%S')}")
 
-# 2. ताज़ा डेटा खींचने का इंजन (No Lag)
-def get_crypto_data():
-    ts = int(time.time())
-    url = f"https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT&_={ts}"
+# 2. सुपर-फास्ट डेटा इंजन (Yahoo Finance)
+def get_live_data():
     try:
-        # सीधा लाइव प्राइस
-        res = requests.get(url, timeout=2).json()
-        price = float(res['price'])
-        
-        # चार्ट और इंडिकेटर्स के लिए डेटा
-        c_url = f"https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=50"
-        c_res = requests.get(c_url, timeout=2).json()
-        df = pd.DataFrame(c_res, columns=['T','O','H','L','C','V','CT','QV','Tr','TB','TQ','I'])
-        df['Close'] = df['Close'].astype(float)
-        
-        # जावेद (EMA 9/21)
-        df['E9'] = ta.ema(df['Close'], length=9)
-        df['E21'] = ta.ema(df['Close'], length=21)
-        
-        return price, df
+        # सीधा बिटकॉइन का डेटा खींचना
+        data = yf.download(tickers='BTC-USD', period='1d', interval='1m', progress=False)
+        if not data.empty:
+            # लेटेस्ट भाव
+            price = data['Close'].iloc[-1]
+            # जावेद (EMA 9/21)
+            data['E9'] = ta.ema(data['Close'], length=9)
+            data['E21'] = ta.ema(data['Close'], length=21)
+            return price, data
+        return 0.0, pd.DataFrame()
     except:
         return 0.0, pd.DataFrame()
 
-# 3. जार्विस डिस्प्ले
-price, df = get_crypto_data()
+# 3. जार्विस डिस्प्ले लॉजिक
+price, df = get_live_data()
 
 if price > 0:
-    # बिटकॉइन का चमकता हुआ भाव
+    # बिटकॉइन का बड़ा और चमकता हुआ भाव
     st.markdown(f"""
-        <div style="background-color:#000; padding:20px; border-radius:15px; border:3px solid #F7931A; text-align:center;">
-            <h2 style="color:#F7931A; margin:0;">BITCOIN LIVE PRICE</h2>
-            <h1 style="color:#00FF00; font-size:65px; margin:10px;">${price:,}</h1>
+        <div style="background-color:#111; padding:20px; border-radius:15px; border:2px solid #00FF00; text-align:center;">
+            <h2 style="color:#00FF00; margin:0;">BITCOIN LIVE (USD)</h2>
+            <h1 style="color:white; font-size:60px; margin:10px;">${price:,.2f}</h1>
         </div>
     """, unsafe_allow_html=True)
 
-    # जावेद सिग्नल
-    e9, e21 = df['E9'].iloc[-1], df['E21'].iloc[-1]
-    sig = "🟢 LONG (BUY)" if e9 > e21 else "🔴 SHORT (SELL)"
+    # जावेद सिग्नल चेक
+    e9 = df['E9'].iloc[-1]
+    e21 = df['E21'].iloc[-1]
     
-    c1, c2 = st.columns(2)
-    c1.metric("JAVED SIGNAL", sig)
-    c2.metric("EMA TREND", f"{round(e9,2)} / {round(e21,2)}")
+    sig = "🟢 BUY CALL" if e9 > e21 else "🔴 BUY PUT"
+    
+    col1, col2 = st.columns(2)
+    col1.metric("JAVED SIGNAL", sig)
+    col2.metric("9/21 EMA GAP", f"{round(e9-e21, 2)}")
+
+    if abs(e9-e21) > 50:
+        st.success("🚀 बड़ा मूव आने वाला है, तैयार रहें!")
 else:
-    st.info("📡 जार्विस नेटवर्क ढूँढ रहा है... कृपया 10 सेकंड रुकें।")
+    st.warning("📡 जार्विस डेटा खींचने की कोशिश कर रहा है... अगर यह 30 सेकंड से ज़्यादा ले, तो 'Reboot' दबाएँ।")
+
+if st.button("🔄 FORCE RESET"):
+    st.rerun()
