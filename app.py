@@ -1,58 +1,41 @@
 import streamlit as st
-import pandas as pd
-import pandas_ta as ta
-import yfinance as yf
+import requests
 from streamlit_autorefresh import st_autorefresh
-from datetime import datetime
 
-# 1. 1-सेकंड का हार्ड रिफ्रेश
-st_autorefresh(interval=1000, key="jarvis_fix_v2")
+# 1. सुपर फ़ास्ट रिफ्रेश (1 सेकंड)
+st_autorefresh(interval=1000, key="jarvis_final_fix")
 
-st.title("₿ JARVIS CRYPTO v2.1")
-st.write(f"Last Sync: {datetime.now().strftime('%H:%M:%S')}")
+st.title("₿ JARVIS TURBO v2.5")
+st.subheader("राजवीर सर, अब भाव और आवाज़ दोनों काम करेंगे!")
 
-# 2. सुपर-फास्ट डेटा इंजन (Yahoo Finance)
-def get_live_data():
+# 2. ताज़ा डेटा खींचने का सबसे हल्का इंजन
+def get_btc_price():
     try:
-        # सीधा बिटकॉइन का डेटा खींचना
-        data = yf.download(tickers='BTC-USD', period='1d', interval='1m', progress=False)
-        if not data.empty:
-            # लेटेस्ट भाव
-            price = data['Close'].iloc[-1]
-            # जावेद (EMA 9/21)
-            data['E9'] = ta.ema(data['Close'], length=9)
-            data['E21'] = ta.ema(data['Close'], length=21)
-            return price, data
-        return 0.0, pd.DataFrame()
+        # सीधा कॉइनबेस से भाव उठाना (सबसे तेज़)
+        url = "https://api.coinbase.com/v2/prices/BTC-USD/spot"
+        res = requests.get(url, timeout=2).json()
+        return float(res['data']['amount'])
     except:
-        return 0.0, pd.DataFrame()
+        return 0.0
 
 # 3. जार्विस डिस्प्ले लॉजिक
-price, df = get_live_data()
+price_val = get_btc_price()
 
-if price > 0:
-    # बिटकॉइन का बड़ा और चमकता हुआ भाव
+if price_val > 0:
+    # बिटकॉइन का चमकता हुआ भाव
     st.markdown(f"""
-        <div style="background-color:#111; padding:20px; border-radius:15px; border:2px solid #00FF00; text-align:center;">
-            <h2 style="color:#00FF00; margin:0;">BITCOIN LIVE (USD)</h2>
-            <h1 style="color:white; font-size:60px; margin:10px;">${price:,.2f}</h1>
+        <div style="background-color:#000; padding:20px; border-radius:15px; border:3px solid #F7931A; text-align:center;">
+            <h2 style="color:#F7931A; margin:0;">BITCOIN LIVE PRICE</h2>
+            <h1 style="color:#00FF00; font-size:65px; margin:10px;">${price_val:,.2f}</h1>
         </div>
     """, unsafe_allow_html=True)
 
-    # जावेद सिग्नल चेक
-    e9 = df['E9'].iloc[-1]
-    e21 = df['E21'].iloc[-1]
-    
-    sig = "🟢 BUY CALL" if e9 > e21 else "🔴 BUY PUT"
-    
-    col1, col2 = st.columns(2)
-    col1.metric("JAVED SIGNAL", sig)
-    col2.metric("9/21 EMA GAP", f"{round(e9-e21, 2)}")
-
-    if abs(e9-e21) > 50:
-        st.success("🚀 बड़ा मूव आने वाला है, तैयार रहें!")
+    # पोर्टफोलियो अलर्ट (एक छोटा सा लॉजिक)
+    if price_val > 97000:
+        st.success("🚀 बिटकॉइन आसमान छू रहा है!")
 else:
-    st.warning("📡 जार्विस डेटा खींचने की कोशिश कर रहा है... अगर यह 30 सेकंड से ज़्यादा ले, तो 'Reboot' दबाएँ।")
+    st.info("📡 जार्विस भाव ढूँढ रहा है... कृपया 5 सेकंड रुकें।")
 
-if st.button("🔄 FORCE RESET"):
+# 4. फोर्स रीबूट बटन
+if st.button("🔄 REBOOT JARVIS"):
     st.rerun()
