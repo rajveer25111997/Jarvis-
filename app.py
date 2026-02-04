@@ -4,7 +4,11 @@ from streamlit_autorefresh import st_autorefresh
 
 # 1. सुपर फ़ास्ट रिफ्रेश (1 सेकंड)
 st_autorefresh(interval=1000, key="jarvis_final_fix")
-
+# --- 🔊 जार्विस वॉइस इंजन (टुकड़ा #1) ---
+def speak(text):
+    if text:
+        js = f"<script>window.speechSynthesis.cancel(); var m = new SpeechSynthesisUtterance('{text}'); m.lang='hi-IN'; window.speechSynthesis.speak(m);</script>"
+        st.components.v1.html(js, height=0)
 st.title("₿ JARVIS TURBO v2.5")
 st.subheader("राजवीर सर, अब भाव और आवाज़ दोनों काम करेंगे!")
 
