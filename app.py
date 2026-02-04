@@ -1,8 +1,9 @@
 import streamlit as st
 import requests
-from streamlit_autorefresh import st_autorefresh
 import pandas as pd
 import pandas_ta as ta
+import time
+from streamlit_autorefresh import st_autorefresh
 
 # 1. सुपर फ़ास्ट रिफ्रेश (1 सेकंड)
 st_autorefresh(interval=1000, key="jarvis_final_fix")
